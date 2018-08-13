@@ -28,7 +28,8 @@ public class ChippyActivity extends Activity {
 
         final Bitmap mChippyPlane;
         final ChippyModel mModel;
-        final Paint mTrailPaint, mBackgroundPaint;
+        final Paint mTrailPaint, mBackgroundPaint, mScorePaint;
+
         public ChippyView(final Context context) {
             super(context);
             mChippyPlane = BitmapFactory.decodeResource(getResources(), R.drawable.chippy_plane);
@@ -44,6 +45,11 @@ public class ChippyActivity extends Activity {
                     Color.rgb(40, 100, 255),
                     Color.rgb(210, 210, 245),
                     Shader.TileMode.CLAMP));
+
+            mScorePaint = new Paint();
+            mScorePaint.setARGB(255, 244, 232, 66);
+            mScorePaint.setTextSize(64);
+            mScorePaint.setTypeface(Typeface.create("Arial", Typeface.BOLD));
         }
 
         @Override
@@ -93,8 +99,12 @@ public class ChippyActivity extends Activity {
                     mOffsetX -= 2f;
                     if (mOffsetX <= -41) mOffsetX += 52;
                 }
+                if (mScorePaint != null) {
+                    canvas.drawText(mModel.mScore + " miles", 20, 100, mScorePaint);
+                }
                 mModel.update();
             }
+
             invalidate();
         }
         private boolean mShouldOffsetXTrail = false;
@@ -116,7 +126,7 @@ public class ChippyActivity extends Activity {
     }
 
     public class ChippyModel {
-
+        public int mScore = 0;
         public float positionX, positionY, mAccelerationY;
         public boolean didTap = false;
 
@@ -142,6 +152,7 @@ public class ChippyActivity extends Activity {
                 reset();
             }
             updateTrail(positionY);
+            mScore++;
         }
 
         private void updateTrail(final float y) {
@@ -152,6 +163,7 @@ public class ChippyActivity extends Activity {
         }
 
         public void reset() {
+            mScore = 0;
             mAccelerationY = .6f;
             positionX = 10;
             positionY = 60;
