@@ -1,0 +1,39 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                xmlns:tools="http://schemas.android.com/tools"
+                android:id="@+id/activity_main"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:paddingTop="@dimen/activity_vertical_margin"
+                android:paddingBottom="@dimen/activity_vertical_margin"
+                android:background="#cdcdcd"
+                tools:context="com.hipmunk.shinytext.MainActivity">
+    <LinearLayout
+        android:id="@+id/shiny_container"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_centerInParent="true">
+        <ImageView
+            android:id="@+id/shinyLogo"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:src="@drawable/hipmunk_textonly"
+            android:visibility="gone" />
+        <TextView
+            android:id="@+id/shinytext"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Hipmunk"
+            android:textColor="#3394de"
+            android:textSize="60sp"
+            android:gravity="center"
+            android:textStyle="bold" />
+        <TextView
+            android:id="@+id/caption"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Don't let planning travel drive you nuts"
+            android:gravity="center"
+            android:textSize="18sp"/>
+    </LinearLayout>
+</RelativeLayout>
