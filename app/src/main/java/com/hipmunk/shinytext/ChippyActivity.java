@@ -35,7 +35,7 @@ public class ChippyActivity extends Activity {
         // final Bitmap mForegroundCloudsBitmap;
         final Paint mTrailPaint, mBackgroundPaint, mScorePaint;
 
-        //
+        // offset for drawing
         private boolean mShouldOffsetXTrail = false;
         private float mOffsetX = 0;
 
@@ -53,7 +53,7 @@ public class ChippyActivity extends Activity {
             mBossPlane = BitmapFactory.decodeResource(getResources(), R.drawable.boss0);
             mModel = new ChippyModel();
             mTrailPaint = new Paint();
-//            mTrailPaint.setARGB(180, 225, 225, 225);
+            // mTrailPaint.setARGB(180, 225, 225, 225);
             mTrailPaint.setARGB(230, 85, 235, 185);
             mTrailPaint.setTypeface(Typeface.create("Arial", Typeface.BOLD));
 
@@ -90,8 +90,6 @@ public class ChippyActivity extends Activity {
                     topEnemy.positionY = 30 + (mRandom.nextInt(15) * (mRandom.nextBoolean() ? 1 : -1));
                     topEnemy.mAccelerationX = -1.1f + (mRandom.nextInt(100) * .001f * (mRandom.nextBoolean() ? 1 : -1));
                     topEnemy.mAccelerationY = (chippy.positionY + 2 - topEnemy.positionY) / topEnemy.positionX;
-                            // (chippy.positionY - topEnemy.positionY) * topEnemy.mAccelerationX * .01f;
-                            //// * (chippy.positionY < topEnemy.positionY ? 1 : -1);
 
                     // resetting top enemy
                     final Enemy bottomEnemy = mEnemies.get(1);
@@ -99,8 +97,6 @@ public class ChippyActivity extends Activity {
                     bottomEnemy.positionY = 70 + (mRandom.nextInt(15) * (mRandom.nextBoolean() ? 1 : -1));
                     bottomEnemy.mAccelerationX = -1.1f + (mRandom.nextInt(100) * .001f * (mRandom.nextBoolean() ? 1 : -1));
                     bottomEnemy.mAccelerationY = (chippy.positionY + 2 - bottomEnemy.positionY) / bottomEnemy.positionX;
-                            // (chippy.positionY - bottomEnemy.positionY) * bottomEnemy.mAccelerationX * .01f;
-                            //// * (chippy.positionY < topEnemy.positionY ? -1 : 1);
                 }
             }
         }
@@ -133,7 +129,7 @@ public class ChippyActivity extends Activity {
                 final float yPos = mModel.positionY * .01f * getHeight();
                 final float xSize = mModel.mWidth * .01f * getWidth();
                 final float ySize = (mModel.mHeight + 1) * .01f * getHeight();
-                // canvas.drawBitmap(mChippyPlane, xPos, yPos, null);
+
                 // drawing with scale
                 canvas.drawBitmap(mChippyPlane, null, new Rect((int)xPos, (int)yPos, (int)(xPos + xSize), (int)(yPos + ySize)), null);
 
@@ -165,11 +161,12 @@ public class ChippyActivity extends Activity {
                         canvas.drawText("$",
                                 xTrail + mOffsetX,
                                 yTrail + ySize / 2 + yOffset,
-//                                4 + (trailIndex++),
                                 mTrailPaint);
-//                        canvas.drawCircle(xTrail + mOffsetX,
-//                                yTrail + mChippyPlane.getHeight() / 2 + yOffset,
-//                                4 + (trailIndex++), mTrailPaint);
+
+                        // Draws smoke
+                        /* canvas.drawCircle(xTrail + mOffsetX,
+                                yTrail + mChippyPlane.getHeight() / 2 + yOffset,
+                                4 + (trailIndex++), mTrailPaint); */
                     }
                     mOffsetX -= 2f;
                     if (mOffsetX <= -41 && mModel.canTap) {
@@ -201,12 +198,10 @@ public class ChippyActivity extends Activity {
                         if (enemyCount < 3) {
                             final float posX = e.positionX * .01f * getWidth(), posY = e.positionY * .01f * getHeight();
                             final float sizeX = e.sizeX * .01f * getWidth(), sizeY = e.sizeY * .01f * getHeight();
+
                             // drawing owls
                             canvas.drawBitmap(enemyCount == 1 ? mEnemyPlaneBitmap0 : mEnemyPlaneBitmap1,
                                     null, new Rect((int)posX, (int)posY, (int)(posX + sizeX), (int)(posY + sizeY)), null);
-//                            canvas.drawRect(posX, posY,
-//                                    posX + sizeX, posY + sizeY,
-//                                    mScorePaint);
                         } else {
                             final float posX = e.positionX * .01f * getWidth(), posY = (e.positionY - 2) * .01f * getHeight();
                             final float xBossSize = e.sizeX * .01f * getWidth();
@@ -228,14 +223,10 @@ public class ChippyActivity extends Activity {
 
         @Override
         public boolean onTouchEvent(final MotionEvent event) {
-            System.out.println("Chippy event: " + event.toString());
             if (event.getAction() == MotionEvent.ACTION_DOWN) {
-                System.out.println("Chippy pressed down");
                 if (mModel != null) {
                     mModel.didTap = true;
                 }
-            } else {
-                System.out.println("Chippy pressed something else");
             }
             return super.onTouchEvent(event);
         }
