@@ -14,6 +14,8 @@ import android.os.Bundle;
 import android.view.MotionEvent;
 import android.view.View;
 
+import java.util.ArrayList;
+
 public class ChippyActivity extends Activity {
 
     @Override
@@ -29,6 +31,7 @@ public class ChippyActivity extends Activity {
         final Bitmap mChippyPlane;
         final ChippyModel mModel;
         final Paint mTrailPaint, mBackgroundPaint, mScorePaint;
+        final ArrayList<Enemy> mEnemies = new ArrayList<>();
 
         public ChippyView(final Context context) {
             super(context);
@@ -103,6 +106,16 @@ public class ChippyActivity extends Activity {
                     canvas.drawText(mModel.mScore + " miles", 20, 100, mScorePaint);
                 }
                 mModel.update();
+
+                if (mEnemies != null) {
+                    for (Enemy e: mEnemies) {
+                        if (e.collidesWithPlayer(mModel)) {
+                            mModel.reset();
+                            break;
+                        }
+                        e.update();
+                    }
+                }
             }
 
             invalidate();
@@ -122,64 +135,6 @@ public class ChippyActivity extends Activity {
                 System.out.println("Chippy pressed something else");
             }
             return super.onTouchEvent(event);
-        }
-    }
-
-    public class ChippyModel {
-        public int mScore = 0;
-        public float positionX, positionY, mAccelerationY;
-        public boolean didTap = false;
-
-        public Point[] trail = new Point[5];
-
-        public ChippyModel() {
-            reset();
-        }
-
-        public void update() {
-            if (didTap) {
-                didTap = false;
-                mAccelerationY += .7;
-            }
-            mAccelerationY -= .03;
-            if (mAccelerationY < -1.2) mAccelerationY = -1.2f;
-            if (mAccelerationY > 1.4) mAccelerationY = 1.4f;
-            positionY -= mAccelerationY;
-
-            if (positionY > 98) {
-                reset();
-            } else if (positionY < 2) {
-                reset();
-            }
-            updateTrail(positionY);
-            mScore++;
-        }
-
-        private void updateTrail(final float y) {
-            for (int i = trail.length -1; i > 0; i--) {
-                trail[i].positionY = trail[i-1].positionY;
-            }
-            trail[0].positionY = y;
-        }
-
-        public void reset() {
-            mScore = 0;
-            mAccelerationY = .6f;
-            positionX = 10;
-            positionY = 60;
-            trail[0] = new Point(positionX + 1, positionY);
-            trail[1] = new Point(positionX - 1, positionY);
-            trail[2] = new Point(positionX - 3, positionY);
-            trail[3] = new Point(positionX - 6, positionY);
-            trail[4] = new Point(positionX - 9, positionY);
-        }
-    }
-
-    public class Point {
-        public float positionX, positionY;
-        public Point(final float x, final float y) {
-            positionX = x;
-            positionY = y;
         }
     }
 }
