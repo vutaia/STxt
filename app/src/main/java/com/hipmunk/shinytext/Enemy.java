@@ -11,6 +11,16 @@ public class Enemy {
         reset();
     }
 
+    public Enemy(float x, float y, float width, float height, float accelerationX, float accelerationY) {
+        this();
+        positionX = x;
+        positionY = y;
+        sizeX = width;
+        sizeY = height;
+        mAccelerationX = accelerationX;
+        mAccelerationY = accelerationY;
+    }
+
     public void reset() {
         positionX = DEFAULT_POSITION_VALUE;
         positionY = DEFAULT_POSITION_VALUE;
@@ -26,6 +36,8 @@ public class Enemy {
         //TODO: check if acceleration is outside bounds and then reverse acceleration
         // if (mAccelerationX > mMaxAccelerationX)
 
+        positionX += mAccelerationX;
+        positionY += mAccelerationY;
     }
 
     public boolean collidesWithPlayer(final ChippyModel chippy) {

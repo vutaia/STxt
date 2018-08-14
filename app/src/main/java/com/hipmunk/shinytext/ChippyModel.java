@@ -4,7 +4,8 @@ public class ChippyModel {
     public int mScore = 0;
     public float positionX, positionY, mAccelerationY;
     public boolean didTap = false;
-    public final int mWidth = 84, mHeight = 38;
+    public boolean canTap = true;
+    public final int mWidth = 16, mHeight = 5;
 
     public Point[] trail = new Point[5];
 
@@ -12,8 +13,8 @@ public class ChippyModel {
         reset();
     }
 
-    public void update() {
-        if (didTap) {
+    public boolean update() {
+        if (didTap && canTap) {
             didTap = false;
             mAccelerationY += .7;
         }
@@ -24,11 +25,16 @@ public class ChippyModel {
 
         if (positionY > 98) {
             reset();
-        } else if (positionY < 2) {
-            reset();
+            return true;
+        } else if (positionY < -1) {
+            canTap = false;
+            if (mAccelerationY > 0) {
+                mAccelerationY = 0;
+            }
         }
         updateTrail(positionY);
         mScore++;
+        return false;
     }
 
     private void updateTrail(final float y) {
@@ -40,9 +46,10 @@ public class ChippyModel {
 
     public void reset() {
         mScore = 0;
+        canTap = true;
         mAccelerationY = .6f;
         positionX = 10;
-        positionY = 60;
+        positionY = 50;
         trail[0] = new Point(positionX + 1, positionY);
         trail[1] = new Point(positionX - 1, positionY);
         trail[2] = new Point(positionX - 3, positionY);

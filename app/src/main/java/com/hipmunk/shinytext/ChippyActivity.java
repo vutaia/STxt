@@ -8,6 +8,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.LinearGradient;
 import android.graphics.Paint;
+import android.graphics.Rect;
 import android.graphics.Shader;
 import android.graphics.Typeface;
 import android.os.Bundle;
@@ -15,6 +16,7 @@ import android.view.MotionEvent;
 import android.view.View;
 
 import java.util.ArrayList;
+import java.util.Random;
 
 public class ChippyActivity extends Activity {
 
@@ -32,6 +34,7 @@ public class ChippyActivity extends Activity {
         final ChippyModel mModel;
         final Paint mTrailPaint, mBackgroundPaint, mScorePaint;
         final ArrayList<Enemy> mEnemies = new ArrayList<>();
+        final Random mRandom = new Random(System.currentTimeMillis());
 
         public ChippyView(final Context context) {
             super(context);
@@ -53,6 +56,37 @@ public class ChippyActivity extends Activity {
             mScorePaint.setARGB(255, 244, 232, 66);
             mScorePaint.setTextSize(64);
             mScorePaint.setTypeface(Typeface.create("Arial", Typeface.BOLD));
+            initEnemies();
+        }
+
+        private void initEnemies() {
+            mEnemies.clear();
+            mEnemies.add(new Enemy(120, 30, 10, 5, -1, .1f));
+            mEnemies.add(new Enemy(140, 70, 10, 5, -1.2f, 0));
+        }
+
+        private void spawnNewEnemies(final ChippyModel chippy) {
+            if (!mEnemies.isEmpty()) {
+                if (mEnemies.size() == 2) {
+                    // resetting top enemy
+                    final Enemy topEnemy = mEnemies.get(0);
+                    topEnemy.positionX = 120 + (mRandom.nextInt(10) * (mRandom.nextBoolean() ? 1 : -1));
+                    topEnemy.positionY = 30 + (mRandom.nextInt(15) * (mRandom.nextBoolean() ? 1 : -1));
+                    topEnemy.mAccelerationX = -1.1f + (mRandom.nextInt(100) * .001f * (mRandom.nextBoolean() ? 1 : -1));
+                    topEnemy.mAccelerationY = (chippy.positionY - topEnemy.positionY) / topEnemy.positionX;
+                            // (chippy.positionY - topEnemy.positionY) * topEnemy.mAccelerationX * .01f;
+                            //// * (chippy.positionY < topEnemy.positionY ? 1 : -1);
+
+                    // resetting top enemy
+                    final Enemy bottomEnemy = mEnemies.get(1);
+                    bottomEnemy.positionX = 120 + (mRandom.nextInt(10) * (mRandom.nextBoolean() ? 1 : -1));
+                    bottomEnemy.positionY = 70 + (mRandom.nextInt(15) * (mRandom.nextBoolean() ? 1 : -1));
+                    bottomEnemy.mAccelerationX = -1.1f + (mRandom.nextInt(100) * .001f * (mRandom.nextBoolean() ? 1 : -1));
+                    bottomEnemy.mAccelerationY = (chippy.positionY - bottomEnemy.positionY) / bottomEnemy.positionX;
+                            // (chippy.positionY - bottomEnemy.positionY) * bottomEnemy.mAccelerationX * .01f;
+                            //// * (chippy.positionY < topEnemy.positionY ? -1 : 1);
+                }
+            }
         }
 
         @Override
@@ -63,7 +97,11 @@ public class ChippyActivity extends Activity {
                 // drawing chippy
                 final float xPos = mModel.positionX * .01f * getWidth();
                 final float yPos = mModel.positionY * .01f * getHeight();
-                canvas.drawBitmap(mChippyPlane, xPos, yPos, null);
+                final float xSize = mModel.mWidth * .01f * getWidth();
+                final float ySize = (mModel.mHeight + 1) * .01f * getHeight();
+                // canvas.drawBitmap(mChippyPlane, xPos, yPos, null);
+                // drawing with scale
+                canvas.drawBitmap(mChippyPlane, null, new Rect((int)xPos, (int)yPos, (int)(xPos + xSize), (int)(yPos + ySize)), null);
 
                 // drawing trail
                 if (mTrailPaint != null) {
@@ -92,7 +130,7 @@ public class ChippyActivity extends Activity {
                         mTrailPaint.setTextSize(20 + (int)(2*(trailIndex++)));
                         canvas.drawText("$",
                                 xTrail + mOffsetX,
-                                yTrail + mChippyPlane.getHeight() / 2 + yOffset,
+                                yTrail + ySize / 2 + yOffset,
 //                                4 + (trailIndex++),
                                 mTrailPaint);
 //                        canvas.drawCircle(xTrail + mOffsetX,
@@ -100,19 +138,32 @@ public class ChippyActivity extends Activity {
 //                                4 + (trailIndex++), mTrailPaint);
                     }
                     mOffsetX -= 2f;
-                    if (mOffsetX <= -41) mOffsetX += 52;
+                    if (mOffsetX <= -41 && mModel.canTap) {
+                        mOffsetX += 52;
+                    }
                 }
                 if (mScorePaint != null) {
                     canvas.drawText(mModel.mScore + " miles", 20, 100, mScorePaint);
                 }
-                mModel.update();
+                final boolean isGameOver = mModel.update();
+                if (isGameOver) {
+                    initEnemies();
+                } else if (mModel.mScore % 180 == 0) {
+                    spawnNewEnemies(mModel);
+                }
 
                 if (mEnemies != null) {
                     for (Enemy e: mEnemies) {
                         if (e.collidesWithPlayer(mModel)) {
                             mModel.reset();
+                            initEnemies();
                             break;
                         }
+                        final float posX = e.positionX * .01f * getWidth(), posY = e.positionY * .01f * getHeight();
+                        final float sizeX = e.sizeX * .01f * getWidth(), sizeY = e.sizeY * .01f * getHeight();
+                        canvas.drawRect(posX, posY,
+                                posX + sizeX, posY + sizeY,
+                                mScorePaint);
                         e.update();
                     }
                 }
