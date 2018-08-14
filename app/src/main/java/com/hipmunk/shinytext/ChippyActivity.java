@@ -15,6 +15,7 @@ import android.os.Bundle;
 import android.view.MotionEvent;
 import android.view.View;
 
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Random;
 
@@ -26,19 +27,30 @@ public class ChippyActivity extends Activity {
         setContentView(new ChippyView(this));
     }
 
-
-
     public class ChippyView extends View {
 
-        final Bitmap mChippyPlane;
+        // visual objects
         final ChippyModel mModel;
+        final Bitmap mBackgroundCloudsBitmap, mChippyPlane, mEnemyPlaneBitmap0, mEnemyPlaneBitmap1, mBossPlane;
+        // final Bitmap mForegroundCloudsBitmap;
         final Paint mTrailPaint, mBackgroundPaint, mScorePaint;
+
+        //
+        private boolean mShouldOffsetXTrail = false;
+        private float mOffsetX = 0;
+
         final ArrayList<Enemy> mEnemies = new ArrayList<>();
         final Random mRandom = new Random(System.currentTimeMillis());
 
         public ChippyView(final Context context) {
             super(context);
+            mBackgroundCloudsBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.clouds5);
+            // Needs a better fog foreground image
+            // mForegroundCloudsBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.foreground_fog);
             mChippyPlane = BitmapFactory.decodeResource(getResources(), R.drawable.chippy_plane);
+            mEnemyPlaneBitmap0 = BitmapFactory.decodeResource(getResources(), R.drawable.enemy0);
+            mEnemyPlaneBitmap1 = BitmapFactory.decodeResource(getResources(), R.drawable.enemy1);
+            mBossPlane = BitmapFactory.decodeResource(getResources(), R.drawable.boss0);
             mModel = new ChippyModel();
             mTrailPaint = new Paint();
 //            mTrailPaint.setARGB(180, 225, 225, 225);
@@ -61,19 +73,23 @@ public class ChippyActivity extends Activity {
 
         private void initEnemies() {
             mEnemies.clear();
-            mEnemies.add(new Enemy(120, 30, 10, 5, -1, .1f));
-            mEnemies.add(new Enemy(140, 70, 10, 5, -1.2f, 0));
+            mEnemies.add(new Enemy(120, 30, 14, 5, -1, .1f));
+            mEnemies.add(new Enemy(140, 70, 14, 5, -1.2f, 0));
+        }
+
+        private void spawnBoss() {
+            mEnemies.add(new Enemy(160, 30, 80, 18, -1.8f, .2f));
         }
 
         private void spawnNewEnemies(final ChippyModel chippy) {
             if (!mEnemies.isEmpty()) {
-                if (mEnemies.size() == 2) {
+                if (mEnemies.size() >= 2) {
                     // resetting top enemy
                     final Enemy topEnemy = mEnemies.get(0);
                     topEnemy.positionX = 120 + (mRandom.nextInt(10) * (mRandom.nextBoolean() ? 1 : -1));
                     topEnemy.positionY = 30 + (mRandom.nextInt(15) * (mRandom.nextBoolean() ? 1 : -1));
                     topEnemy.mAccelerationX = -1.1f + (mRandom.nextInt(100) * .001f * (mRandom.nextBoolean() ? 1 : -1));
-                    topEnemy.mAccelerationY = (chippy.positionY - topEnemy.positionY) / topEnemy.positionX;
+                    topEnemy.mAccelerationY = (chippy.positionY + 2 - topEnemy.positionY) / topEnemy.positionX;
                             // (chippy.positionY - topEnemy.positionY) * topEnemy.mAccelerationX * .01f;
                             //// * (chippy.positionY < topEnemy.positionY ? 1 : -1);
 
@@ -82,17 +98,35 @@ public class ChippyActivity extends Activity {
                     bottomEnemy.positionX = 120 + (mRandom.nextInt(10) * (mRandom.nextBoolean() ? 1 : -1));
                     bottomEnemy.positionY = 70 + (mRandom.nextInt(15) * (mRandom.nextBoolean() ? 1 : -1));
                     bottomEnemy.mAccelerationX = -1.1f + (mRandom.nextInt(100) * .001f * (mRandom.nextBoolean() ? 1 : -1));
-                    bottomEnemy.mAccelerationY = (chippy.positionY - bottomEnemy.positionY) / bottomEnemy.positionX;
+                    bottomEnemy.mAccelerationY = (chippy.positionY + 2 - bottomEnemy.positionY) / bottomEnemy.positionX;
                             // (chippy.positionY - bottomEnemy.positionY) * bottomEnemy.mAccelerationX * .01f;
                             //// * (chippy.positionY < topEnemy.positionY ? -1 : 1);
                 }
             }
         }
 
+        private float mBackgroundCloudsOffset = 0, mBackgroundCloudWidth = -1;
+        private DecimalFormat mScoreFormatter = new DecimalFormat("#,###");
+
         @Override
         public void draw(final Canvas canvas) {
             super.draw(canvas);
+
+            // background shit
+            if (mBackgroundCloudWidth < 0) {
+                mBackgroundCloudWidth = mBackgroundCloudsBitmap.getWidth();
+            }
             canvas.drawRect(0, 0, canvas.getWidth(), canvas.getHeight(), mBackgroundPaint);
+            canvas.drawBitmap(mBackgroundCloudsBitmap, mBackgroundCloudsOffset, canvas.getHeight() - mBackgroundCloudsBitmap.getHeight(), null);
+            mBackgroundCloudsOffset -= 1.6f;
+            if (mBackgroundCloudWidth + mBackgroundCloudsOffset < canvas.getWidth()) {
+                canvas.drawBitmap(mBackgroundCloudsBitmap, mBackgroundCloudWidth + mBackgroundCloudsOffset, canvas.getHeight() - mBackgroundCloudsBitmap.getHeight(), null);
+            }
+            if (Math.abs(mBackgroundCloudsOffset) > mBackgroundCloudWidth) {
+                mBackgroundCloudsOffset = mBackgroundCloudWidth - Math.abs(mBackgroundCloudsOffset);
+            }
+
+            // player shit
             if (mChippyPlane != null && mModel != null) {
                 // drawing chippy
                 final float xPos = mModel.positionX * .01f * getWidth();
@@ -143,36 +177,54 @@ public class ChippyActivity extends Activity {
                     }
                 }
                 if (mScorePaint != null) {
-                    canvas.drawText(mModel.mScore + " miles", 20, 100, mScorePaint);
+                    canvas.drawText(mScoreFormatter.format(mModel.mScore).replaceAll(",", ",") + " km", 32, 100, mScorePaint);
                 }
                 final boolean isGameOver = mModel.update();
                 if (isGameOver) {
                     initEnemies();
                 } else if (mModel.mScore % 180 == 0) {
                     spawnNewEnemies(mModel);
+                    if (mModel.mScore > 0 && mModel.mScore % (180 * 3) == 0) {
+                        spawnBoss();
+                    }
                 }
 
                 if (mEnemies != null) {
+                    int enemyCount = 0;
                     for (Enemy e: mEnemies) {
+                        enemyCount++;
                         if (e.collidesWithPlayer(mModel)) {
                             mModel.reset();
                             initEnemies();
                             break;
                         }
-                        final float posX = e.positionX * .01f * getWidth(), posY = e.positionY * .01f * getHeight();
-                        final float sizeX = e.sizeX * .01f * getWidth(), sizeY = e.sizeY * .01f * getHeight();
-                        canvas.drawRect(posX, posY,
-                                posX + sizeX, posY + sizeY,
-                                mScorePaint);
+                        if (enemyCount < 3) {
+                            final float posX = e.positionX * .01f * getWidth(), posY = e.positionY * .01f * getHeight();
+                            final float sizeX = e.sizeX * .01f * getWidth(), sizeY = e.sizeY * .01f * getHeight();
+                            // drawing owls
+                            canvas.drawBitmap(enemyCount == 1 ? mEnemyPlaneBitmap0 : mEnemyPlaneBitmap1,
+                                    null, new Rect((int)posX, (int)posY, (int)(posX + sizeX), (int)(posY + sizeY)), null);
+//                            canvas.drawRect(posX, posY,
+//                                    posX + sizeX, posY + sizeY,
+//                                    mScorePaint);
+                        } else {
+                            final float posX = e.positionX * .01f * getWidth(), posY = (e.positionY - 2) * .01f * getHeight();
+                            final float xBossSize = e.sizeX * .01f * getWidth();
+                            final float yBossSize = (e.sizeY) * .01f * getHeight();
+                            // drawing with scale, and top offset
+                            canvas.drawBitmap(mBossPlane, null, new Rect((int)posX, (int)posY, (int)(posX + xBossSize), (int)(posY + yBossSize)), null);
+                        }
+
                         e.update();
                     }
                 }
             }
 
+            // drawing foreground (fog, etc.)
+            // canvas.drawBitmap(mForegroundCloudsBitmap, 0, canvas.getHeight() - mForegroundCloudsBitmap.getHeight() - 100, null);
+
             invalidate();
         }
-        private boolean mShouldOffsetXTrail = false;
-        private float mOffsetX = 0;
 
         @Override
         public boolean onTouchEvent(final MotionEvent event) {
